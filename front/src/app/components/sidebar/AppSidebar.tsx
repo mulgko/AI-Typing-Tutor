@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
-import { useTheme } from "next-themes";
+
+import { useTheme } from "../../contexts/ThemeContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +47,7 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const { toast } = useToast();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -56,11 +57,10 @@ export function AppSidebar() {
     avatar: "/placeholder.svg?height=32&width=32",
   });
 
-  const toggleTheme = () => {
-    const newTheme = resolvedTheme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
+  const handleToggleTheme = () => {
+    toggleTheme();
     toast({
-      title: `${newTheme === "dark" ? "다크" : "라이트"} 모드로 변경되었습니다`,
+      title: `${theme === "light" ? "다크" : "라이트"} 모드로 변경되었습니다`,
       description: "화면 테마가 변경되었습니다.",
     });
   };
@@ -74,7 +74,9 @@ export function AppSidebar() {
             <Keyboard className="h-4 w-4" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-sm">AI 타이핑 튜터</div>
+            <div className="font-semibold text-sm text-foreground">
+              AI 타이핑 튜터
+            </div>
             <div className="text-xs text-muted-foreground">개인화 학습</div>
           </div>
         </div>
@@ -135,17 +137,17 @@ export function AppSidebar() {
             <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-md shadow-lg py-1">
               <button
                 onClick={() => {
-                  toggleTheme();
+                  handleToggleTheme();
                   setIsDropdownOpen(false);
                 }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
               >
-                {resolvedTheme === "dark" ? (
+                {theme === "dark" ? (
                   <Sun className="h-4 w-4" />
                 ) : (
                   <Moon className="h-4 w-4" />
                 )}
-                {resolvedTheme === "dark" ? "라이트 모드" : "다크 모드"}
+                {theme === "dark" ? "라이트 모드" : "다크 모드"}
               </button>
               <Link
                 href="/settings"

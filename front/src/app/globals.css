@@ -1,25 +1,53 @@
 @import url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css");
 @import "tailwindcss";
 
-@import "../styles/theme.css";
-@import "../styles/variables.css";
-@import "../styles/mixins.css";
+/* 기본값 (라이트 모드) */
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
-/* Tailwind의 transition-colors 유틸리티를 모든 요소에 적용하고 싶다면: */
-* {
-  /* transition-property: all;
-  transition-duration: 300ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); */
+/* 라이트 모드 (명시적) */
+[data-theme="light"] {
+  --color-background: #ff0c0c;
+  --color-foreground: #020817;
+  --color-card: #ffffff;
+  --color-card-foreground: #020817;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #020817;
+  --color-primary: #2563eb;
+  --color-primary-foreground: #f8fafc;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0f172a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #2563eb;
 }
 
-.scrollbar-hidden {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-.scrollbar-hidden::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+/* 다크 모드 */
+[data-theme="dark"] {
+  /* --color-background: #020817; */
+  --color-background: #ff0c0c;
+  --color-foreground: #f8fafc;
+  --color-card: #020817;
+  --color-card-foreground: #f8fafc;
+  --color-popover: #020817;
+  --color-popover-foreground: #f8fafc;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #0f172a;
+  --color-secondary: #1e293b;
+  --color-secondary-foreground: #f8fafc;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #1e293b;
+  --color-accent-foreground: #f8fafc;
+  --color-destructive: #7f1d1d;
+  --color-destructive-foreground: #f8fafc;
+  --color-border: #1e293b;
+  --color-input: #1e293b;
+  --color-ring: #1d4ed8;
 }
 
 html,

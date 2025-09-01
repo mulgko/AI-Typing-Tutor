@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { AppSidebar } from "./components/sidebar/AppSidebar";
 
 export const metadata: Metadata = {
   title: "AI 타이핑 튜터",
@@ -16,10 +15,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body className={`${inter.className} antialiased font-sans`}>
-        {children}
-      </body>
+    <html lang="ko" suppressHydrationWarning>
+      <ThemeProvider>
+        <body className="antialiased font-sans bg-background text-foreground">
+          <div className="flex h-screen">
+            <AppSidebar />
+            <main className="flex-1 overflow-auto">{children}</main>
+          </div>
+        </body>
+      </ThemeProvider>
     </html>
   );
 }
