@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 
 export interface Toast {
   id: string;
@@ -7,38 +7,80 @@ export interface Toast {
   variant?: "default" | "destructive";
 }
 
+export interface ToastOptions {
+  title?: string;
+  description?: string;
+  variant?: "default" | "destructive";
+  duration?: number;
+}
+
+const toasts: Toast[] = [];
+const listeners: Array<(toasts: Toast[]) => void> = [];
+
+let toastCount = 0;
+
+function genId() {
+  toastCount = (toastCount + 1) % Number.MAX_VALUE;
+  return toastCount.toString();
+}
+
+function addToast(toast: ToastOptions) {
+  const id = genId();
+  const newToast: Toast = {
+    id,
+    title: toast.title,
+    description: toast.description,
+    variant: toast.variant || "default",
+  };
+
+  toasts.unshift(newToast);
+  listeners.forEach((listener) => listener([...toasts]));
+
+  // Auto remove after duration
+  setTimeout(() => {
+    removeToast(id);
+  }, toast.duration || 5000);
+
+  return id;
+}
+
+function removeToast(id: string) {
+  const index = toasts.findIndex((toast) => toast.id === id);
+  if (index > -1) {
+    toasts.splice(index, 1);
+    listeners.forEach((listener) => listener([...toasts]));
+  }
+}
+
 export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [state, setState] = useState<Toast[]>([...toasts]);
 
-  const toast = useCallback(
-    ({ title, description, variant = "default" }: Omit<Toast, "id">) => {
-      const id = Math.random().toString(36).substr(2, 9);
-      const newToast: Toast = {
-        id,
-        title,
-        description,
-        variant,
-      };
+  React.useEffect(() => {
+    listeners.push(setState);
+    return () => {
+      const index = listeners.indexOf(setState);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  }, []);
 
-      setToasts((prev) => [...prev, newToast]);
+  const toast = useCallback((options: ToastOptions) => {
+    addToast(options);
+  }, []);
 
-      // 3초 후 자동으로 토스트 제거
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 3000);
-
-      return {
-        id,
-        dismiss: () => setToasts((prev) => prev.filter((t) => t.id !== id)),
-      };
-    },
-    []
-  );
+  const dismiss = useCallback((id?: string) => {
+    if (id) {
+      removeToast(id);
+    } else {
+      toasts.splice(0, toasts.length);
+      listeners.forEach((listener) => listener([...toasts]));
+    }
+  }, []);
 
   return {
     toast,
-    toasts,
-    dismiss: (toastId: string) =>
-      setToasts((prev) => prev.filter((t) => t.id !== toastId)),
+    dismiss,
+    toasts: state,
   };
 }
