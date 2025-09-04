@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" data-theme="light">
       <ThemeProvider>
         <body className="antialiased font-sans bg-background text-foreground">
           <div className="flex h-screen">

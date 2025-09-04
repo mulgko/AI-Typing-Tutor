@@ -1,11 +1,8 @@
 @import url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css");
 @import "tailwindcss";
 
-/* 기본값 (라이트 모드) */
-
-/* 라이트 모드 (명시적) */
-[data-theme="light"] {
-  --color-background: #ff0c0c;
+@theme {
+  --color-background: #ffffff;
   --color-foreground: #020817;
   --color-card: #ffffff;
   --color-card-foreground: #020817;
@@ -26,10 +23,8 @@
   --color-ring: #2563eb;
 }
 
-/* 다크 모드 */
 [data-theme="dark"] {
-  /* --color-background: #020817; */
-  --color-background: #ff0c0c;
+  --color-background: #020817;
   --color-foreground: #f8fafc;
   --color-card: #020817;
   --color-card-foreground: #f8fafc;
