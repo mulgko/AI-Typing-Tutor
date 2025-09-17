@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Progress } from "./components/ui/progress";
+import { Badge } from "./components/ui/badge";
 
 import { RotateCcw, Zap, Target, Clock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

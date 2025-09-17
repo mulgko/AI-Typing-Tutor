@@ -3,7 +3,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AppSidebar } from "./components/sidebar/AppSidebar";
-import { Toaster } from "@/components/ui/toast";
+import { Toaster } from "./components/ui/toast";
 
 export const metadata: Metadata = {
   title: "AI 타이핑 튜터",
