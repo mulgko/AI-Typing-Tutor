@@ -11,7 +11,11 @@ import {
   Sun,
   LogOut,
   ChevronDown,
+  MenuIcon,
 } from "lucide-react";
+
+import { Button } from "@/app/components/ui/button";
+import { cn } from "@/app/lib/utils";
 
 import { useTheme } from "../../contexts/ThemeContext";
 import Link from "next/link";
@@ -56,6 +60,7 @@ export function AppSidebar() {
     email: "typing@example.com",
     avatar: "/placeholder.svg?height=32&width=32",
   });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleToggleTheme = () => {
     toggleTheme();
@@ -65,10 +70,20 @@ export function AppSidebar() {
     });
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
-    <div className="flex flex-col w-64 h-screen bg-background border-r border-border">
+    // <div className="flex flex-col w-64 h-screen bg-background border-r border-border">
+    <div
+      className={cn(
+        "bg-sidebar border-r border-border flex flex-col h-full shadow-sm transition-all duration-300 ease-in-out overflow-hidden",
+        sidebarCollapsed ? "w-16" : "w-72"
+      )}
+    >
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-border">
+      {/* <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Keyboard className="h-4 w-4" />
@@ -78,6 +93,30 @@ export function AppSidebar() {
               AI 타이핑 튜터
             </div>
             <div className="text-xs text-muted-foreground">개인화 학습</div>
+          </div>
+        </div>
+      </div> */}
+      {/* Header */}
+      <div className="py-3 px-2.5 flex items-center  min-h-[60px]">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="w-8 h-8 p-0 hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-accent-foreground transition-colors duration-200 flex-shrink-0"
+            title={sidebarCollapsed ? "사이드바 열기" : "사이드바 닫기"}
+          >
+            <MenuIcon className="w-4 h-4" />
+          </Button>
+          <div
+            className={cn(
+              "flex items-center gap-1 min-w-0 transition-all duration-300",
+              sidebarCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+            )}
+          >
+            <span className="font-semibold text-sidebar-foreground truncate whitespace-nowrap">
+              Eduwill 챗봇
+            </span>
           </div>
         </div>
       </div>
