@@ -79,7 +79,7 @@ export function AppSidebar() {
     <div
       className={cn(
         "bg-sidebar border-r border-border flex flex-col h-full shadow-sm transition-all duration-300 ease-in-out overflow-hidden",
-        sidebarCollapsed ? "w-16" : "w-72"
+        sidebarCollapsed ? "w-18" : "w-72"
       )}
     >
       {/* Sidebar Header */}
@@ -114,9 +114,20 @@ export function AppSidebar() {
               sidebarCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
             )}
           >
-            <span className="font-semibold text-sidebar-foreground truncate whitespace-nowrap">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Keyboard className="h-4 w-4" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-sm text-foreground truncate">
+                  AI 타이핑 튜터
+                </div>
+                <div className="text-xs text-muted-foreground">개인화 학습</div>
+              </div>
+            </div>
+            {/* <span className="font-semibold text-sidebar-foreground truncate whitespace-nowrap">
               Eduwill 챗봇
-            </span>
+            </span> */}
           </div>
         </div>
       </div>
@@ -141,8 +152,22 @@ export function AppSidebar() {
                       : "text-muted-foreground"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.title}</span>
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 flex-shrink-0",
+                      !sidebarCollapsed && "mr-3"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      " whitespace-nowrap",
+                      sidebarCollapsed
+                        ? "opacity-0 w-0 overflow-hidden"
+                        : "opacity-100"
+                    )}
+                  >
+                    {item.title}
+                  </span>
                 </Link>
               );
             })}
