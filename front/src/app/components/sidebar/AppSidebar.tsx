@@ -176,62 +176,110 @@ export function AppSidebar() {
       </div>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-border">
-        <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-sm font-medium">
-              김
+      <div
+        className={cn(
+          "border-t border-border transition-all duration-300",
+          sidebarCollapsed ? "p-2" : "p-4"
+        )}
+      >
+        {sidebarCollapsed ? (
+          // 접힌 상태: 아이콘들을 세로로 배치
+          <div className="space-y-2">
+            <div className="flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-sm font-medium">
+                김
+              </div>
             </div>
-            <div className="flex-1 text-left">
-              <div className="font-semibold text-sm">{user.name}</div>
-              <div className="text-xs text-muted-foreground">{user.email}</div>
-            </div>
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${
-                isDropdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-md shadow-lg py-1">
+            <div className="flex flex-col space-y-1">
               <button
-                onClick={() => {
-                  handleToggleTheme();
-                  setIsDropdownOpen(false);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                onClick={handleToggleTheme}
+                className="flex items-center justify-center w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                title={theme === "dark" ? "라이트 모드" : "다크 모드"}
               >
                 {theme === "dark" ? (
                   <Sun className="h-4 w-4" />
                 ) : (
                   <Moon className="h-4 w-4" />
                 )}
-                {theme === "dark" ? "라이트 모드" : "다크 모드"}
               </button>
               <Link
                 href="/settings"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="flex items-center justify-center w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                title="설정"
               >
                 <Settings className="h-4 w-4" />
-                설정
               </Link>
-              <div className="border-t border-border my-1"></div>
               <button
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                onClick={() => {
+                  // 로그아웃 로직
+                }}
+                className="flex items-center justify-center w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                title="로그아웃"
               >
                 <LogOut className="h-4 w-4" />
-                로그아웃
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // 열린 상태: 기존 드롭다운 형태
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-sm font-medium">
+                김
+              </div>
+              <div className="flex-1 text-left">
+                <div className="font-semibold text-sm">{user.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {user.email}
+                </div>
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-popover border border-border rounded-md shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    handleToggleTheme();
+                    setIsDropdownOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  {theme === "dark" ? "라이트 모드" : "다크 모드"}
+                </button>
+                <Link
+                  href="/settings"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                  설정
+                </Link>
+                <div className="border-t border-border my-1"></div>
+                <button
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  로그아웃
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
