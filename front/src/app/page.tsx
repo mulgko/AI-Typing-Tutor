@@ -6,24 +6,30 @@ import { Button } from "./components/ui/button";
 import { Progress } from "./components/ui/progress";
 import { Badge } from "./components/ui/badge";
 
-import { RotateCcw, Zap, Target, Clock, AlertCircle } from "lucide-react";
+import {
+  RotateCcw,
+  Zap,
+  Target,
+  Clock,
+  AlertCircle,
+  Brain,
+  TrendingUp,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { typingApi, aiApi } from "@/lib/api";
 
+// 기본 샘플 텍스트 (AI 생성이 실패할 경우 fallback)
 const sampleTexts = [
   "인공지능 기술의 발전으로 우리의 일상생활이 크게 변화하고 있습니다. 스마트폰부터 자동차까지 다양한 분야에서 AI가 활용되고 있으며, 앞으로도 더욱 발전할 것으로 예상됩니다.",
   "타이핑 실력 향상을 위해서는 꾸준한 연습이 필요합니다. 정확성을 먼저 기르고, 그 다음에 속도를 높이는 것이 효과적인 학습 방법입니다.",
   "웹 개발에서 사용자 경험은 매우 중요한 요소입니다. 직관적인 인터페이스와 빠른 응답 속도를 통해 사용자 만족도를 높일 수 있습니다.",
   "기후 변화는 전 세계가 직면한 가장 심각한 문제 중 하나입니다. 지속 가능한 발전을 위해 재생 에너지 사용을 늘리고 탄소 배출을 줄여야 합니다.",
   "독서는 지식을 넓히고 상상력을 기르는 가장 좋은 방법입니다. 다양한 장르의 책을 읽으며 새로운 세계를 경험할 수 있습니다.",
-  "건강한 생활을 위해서는 규칙적인 운동과 균형 잡힌 식단이 필수입니다. 충분한 수면과 스트레스 관리도 중요한 요소입니다.",
-  "디지털 시대에 개인정보 보호는 매우 중요한 이슈가 되었습니다. 안전한 비밀번호 사용과 개인정보 공유에 주의해야 합니다.",
-  "교육의 목적은 단순히 지식을 전달하는 것이 아니라 창의적 사고력을 기르는 것입니다. 학생들이 스스로 생각하고 문제를 해결할 수 있도록 도와야 합니다.",
-  "음악은 감정을 표현하고 사람들을 하나로 연결하는 강력한 매체입니다. 다양한 문화의 음악을 통해 세계를 이해할 수 있습니다.",
-  "과학 기술의 발전은 인류의 삶을 풍요롭게 만들었습니다. 하지만 기술의 올바른 사용과 윤리적 고려가 필요합니다.",
 ];
 
 export default function TypingTest() {
   const [currentText, setCurrentText] = useState(sampleTexts[0]);
+  const [currentTextId, setCurrentTextId] = useState<string | null>(null);
   const [userInput, setUserInput] = useState("");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(false);
@@ -33,7 +39,21 @@ export default function TypingTest() {
   const [errors, setErrors] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [currentTestId, setCurrentTestId] = useState<string | null>(null);
+  const [keystrokeData, setKeystrokeData] = useState<
+    Array<{
+      key: string;
+      timestamp: number;
+      correct: boolean;
+      timeSinceLastKey: number;
+    }>
+  >([]);
+  const [aiInsights, setAiInsights] = useState<{
+    recommendations: string[];
+    feedback?: string;
+  } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const lastKeystrokeTime = useRef<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,10 +81,58 @@ export default function TypingTest() {
     }
   }, [currentText]);
 
-  const handleInputChange = (value: string) => {
+  // 타이핑 테스트 시작
+  const startTypingTest = async () => {
+    try {
+      const response = await typingApi.startTest({
+        textId: currentTextId || undefined,
+        textContent: currentText,
+        testMode: "practice",
+      });
+
+      setCurrentTestId(response.testId);
+      setKeystrokeData([]);
+      setAiInsights(null);
+      lastKeystrokeTime.current = 0;
+    } catch (error) {
+      console.error("Failed to start typing test:", error);
+      // 오프라인 모드로 계속 진행
+    }
+  };
+
+  // 키스트로크 기록
+  const recordKeystroke = (key: string, correct: boolean) => {
+    const now = Date.now();
+    const timeSinceLastKey =
+      lastKeystrokeTime.current > 0 ? now - lastKeystrokeTime.current : 0;
+
+    const keystroke = {
+      key,
+      timestamp: now,
+      correct,
+      timeSinceLastKey,
+    };
+
+    setKeystrokeData((prev) => [...prev, keystroke]);
+    lastKeystrokeTime.current = now;
+  };
+
+  const handleInputChange = async (value: string) => {
+    // 첫 글자 입력 시 테스트 시작
     if (!isActive && value.length > 0) {
       setIsActive(true);
       setStartTime(Date.now());
+      await startTypingTest();
+    }
+
+    // 키스트로크 기록 (마지막 입력 문자)
+    if (value.length > userInput.length) {
+      const newChar = value[value.length - 1];
+      const expectedChar = currentText[value.length - 1];
+      recordKeystroke(newChar, newChar === expectedChar);
+    } else if (value.length < userInput.length) {
+      // 백스페이스
+      recordKeystroke("Backspace", false);
     }
 
     setUserInput(value);
@@ -96,31 +164,41 @@ export default function TypingTest() {
       setIsActive(false);
       setIsCompleted(true);
 
-      toast({
-        title: "테스트 완료!",
-        description: `WPM: ${wpm}, 정확도: ${finalAccuracy}%`,
-      });
+      // 백엔드에 테스트 완료 데이터 전송
+      if (currentTestId) {
+        try {
+          const response = await typingApi.completeTest(currentTestId, {
+            userInput: value,
+            wpm,
+            accuracy: finalAccuracy,
+            timeElapsed,
+            keystrokeData,
+          });
+
+          // AI 분석 결과 표시
+          if (response.aiAnalysis?.success && response.test.aiInsights) {
+            setAiInsights({
+              recommendations: response.test.aiInsights.recommendations || [],
+              feedback: response.aiAnalysis.feedback,
+            });
+          }
+
+          toast({
+            title: "테스트 완료!",
+            description: `WPM: ${wpm}, 정확도: ${finalAccuracy}%`,
+          });
+        } catch (error) {
+          console.error("Failed to complete test:", error);
+          toast({
+            title: "테스트 완료!",
+            description: `WPM: ${wpm}, 정확도: ${finalAccuracy}% (오프라인 모드)`,
+          });
+        }
+      }
 
       // 3초 후 자동으로 새 지문 생성
-      setTimeout(() => {
-        const availableTexts = sampleTexts.filter(
-          (text) => text !== currentText
-        );
-        const randomText =
-          availableTexts[Math.floor(Math.random() * availableTexts.length)];
-        setCurrentText(randomText);
-        setUserInput("");
-        setIsCompleted(false);
-        setStartTime(null);
-        setTimeElapsed(0);
-        setWpm(0);
-        setAccuracy(100);
-        setErrors(0);
-
-        toast({
-          title: "새로운 지문 준비 완료",
-          description: "계속해서 타이핑 연습을 진행하세요!",
-        });
+      setTimeout(async () => {
+        await generateNewText();
       }, 3000);
     }
   };
@@ -141,17 +219,42 @@ export default function TypingTest() {
 
   const generateNewText = async () => {
     setIsGenerating(true);
-    // Simulate AI text generation
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const randomText =
-      sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
-    setCurrentText(randomText);
-    setIsGenerating(false);
-    resetTest();
-    toast({
-      title: "새로운 지문 생성 완료",
-      description: "AI가 당신의 실력에 맞는 맞춤 지문을 생성했습니다.",
-    });
+
+    try {
+      // AI를 사용하여 새로운 텍스트 생성
+      const response = await aiApi.generateText({
+        difficulty: "intermediate", // 추후 사용자 레벨에 따라 동적으로 설정
+        category: "일반",
+        length: "medium",
+        focusAreas: [],
+      });
+
+      setCurrentText(response.text.content);
+      setCurrentTextId(response.text._id);
+      resetTest();
+
+      toast({
+        title: "새로운 지문 생성 완료",
+        description: "AI가 당신의 실력에 맞는 맞춤 지문을 생성했습니다.",
+      });
+    } catch (error) {
+      console.error("Failed to generate AI text:", error);
+
+      // Fallback: 샘플 텍스트 사용
+      const availableTexts = sampleTexts.filter((text) => text !== currentText);
+      const randomText =
+        availableTexts[Math.floor(Math.random() * availableTexts.length)];
+      setCurrentText(randomText);
+      setCurrentTextId(null);
+      resetTest();
+
+      toast({
+        title: "새로운 지문 준비 완료",
+        description: "샘플 지문으로 계속 연습할 수 있습니다.",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const renderText = () => {
@@ -309,10 +412,48 @@ export default function TypingTest() {
           {/* AI Feedback */}
           {isActive && (
             <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <div className="animate-pulse h-2 w-2 bg-blue-500 rounded-full" />
+              <Brain className="h-4 w-4 text-blue-500 animate-pulse" />
               <p className="text-sm text-blue-600 dark:text-blue-400">
                 AI가 실시간으로 당신의 타이핑 패턴을 분석하고 있습니다...
               </p>
+            </div>
+          )}
+
+          {/* AI 분석 결과 */}
+          {aiInsights && (
+            <div className="space-y-3">
+              {aiInsights.feedback && (
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <h4 className="font-semibold text-green-700 dark:text-green-400">
+                      AI 분석 결과
+                    </h4>
+                  </div>
+                  <div className="text-sm text-green-600 dark:text-green-300 whitespace-pre-wrap">
+                    {aiInsights.feedback}
+                  </div>
+                </div>
+              )}
+
+              {aiInsights.recommendations.length > 0 && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="h-4 w-4 text-orange-500" />
+                    <h4 className="font-semibold text-orange-700 dark:text-orange-400">
+                      개선 추천
+                    </h4>
+                  </div>
+                  <ul className="text-sm text-orange-600 dark:text-orange-300 space-y-1">
+                    {aiInsights.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-orange-500 mt-1">•</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
