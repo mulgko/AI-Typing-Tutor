@@ -13,8 +13,10 @@ export interface ToastOptions {
   variant?: "default" | "destructive";
   duration?: number;
 }
-
+// 전역 토스트 배열 - 모든 컴포넌트에서 공유
 const toasts: Toast[] = [];
+
+// 상태 변경을 감지할 리스너들
 const listeners: Array<(toasts: Toast[]) => void> = [];
 
 let toastCount = 0;
@@ -33,13 +35,10 @@ function addToast(toast: ToastOptions) {
     variant: toast.variant || "default",
   };
 
+  // 새 토스트를 맨 앞에 추가 (최신이 위에 표시)
   toasts.unshift(newToast);
+  // 모든 리스너에게 상태 변경 알림
   listeners.forEach((listener) => listener([...toasts]));
-
-  // Auto remove after duration
-  setTimeout(() => {
-    removeToast(id);
-  }, toast.duration || 5000);
 
   return id;
 }

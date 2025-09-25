@@ -1,15 +1,17 @@
 import { tv } from "tailwind-variants";
 
+// 🔧 일단 사용하지 않지만 혹시 모르니 남겨둠
 export const toastVariants = tv({
-  base: "fixed top-4 right-4 z-50 flex w-full max-w-sm items-center space-x-4 rounded-md border p-4 shadow-lg transition-all duration-150",
+  base: "w-full max-w-sm flex items-center space-x-4 rounded-md border p-4 shadow-lg transition-all duration-300 ease-in-out pointer-events-auto",
   variants: {
     variant: {
-      default: "border-gray-200 bg-white text-gray-900",
-      destructive: "border-red-200 bg-red-50 text-red-900",
+      default: "border-border bg-background text-foreground",
+      destructive:
+        "border-destructive/50 bg-destructive text-destructive-foreground",
     },
     visible: {
-      true: "translate-x-0 opacity-100",
-      false: "translate-x-full opacity-0",
+      true: "translate-x-0 opacity-100 scale-100",
+      false: "translate-x-full opacity-0 scale-95",
     },
   },
   defaultVariants: {
@@ -19,21 +21,21 @@ export const toastVariants = tv({
 });
 
 export const toasterVariants = tv({
-  base: "fixed top-0 right-0 z-50 p-4",
+  base: "fixed top-4 right-4 z-[100] pointer-events-none",
 });
 
 export const toastContentVariants = tv({
-  base: "flex-1",
+  base: "flex-1 min-w-0",
 });
 
 export const toastTitleVariants = tv({
-  base: "text-sm font-semibold",
+  base: "text-sm font-semibold leading-none tracking-tight",
 });
 
 export const toastDescriptionVariants = tv({
-  base: "text-sm opacity-90",
+  base: "text-sm opacity-90 mt-1 leading-relaxed",
 });
 
 export const toastCloseButtonVariants = tv({
-  base: "text-gray-400 hover:text-gray-600",
+  base: "text-muted-foreground hover:text-foreground transition-colors shrink-0 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
 });
