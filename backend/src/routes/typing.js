@@ -1,31 +1,43 @@
+// ===================================
+// 타이핑 테스트 라우트 파일 (typing.js)
+// ===================================
+// 이 파일은 타이핑 테스트와 관련된 모든 API 엔드포인트를 담고 있습니다.
+// 테스트 시작/완료, 결과 저장, 텍스트 조회 등의 기능을 제공합니다.
+
 const express = require("express");
-const { body, validationResult, param } = require("express-validator");
-const TypingTest = require("../models/TypingTest");
-const TypingText = require("../models/TypingText");
-const User = require("../models/User");
-const { authenticate, optionalAuth } = require("../middleware/auth");
-const aiService = require("../services/aiService");
+const { body, validationResult, param } = require("express-validator"); // 입력 데이터 검증
+const TypingTest = require("../models/TypingTest"); // 타이핑 테스트 모델
+const TypingText = require("../models/TypingText"); // 타이핑 텍스트 모델
+const User = require("../models/User"); // 사용자 모델
+const { authenticate, optionalAuth } = require("../middleware/auth"); // 인증 미들웨어
+const aiService = require("../services/aiService"); // AI 분석 서비스
 
 const router = express.Router();
 
-// 타이핑 테스트 시작
+// ===================================
+// 타이핑 테스트 시작 API
+// ===================================
+// POST /api/typing/test/start
+// 새로운 타이핑 테스트 세션을 시작합니다
 router.post(
   "/test/start",
-  authenticate,
+  authenticate, // 로그인 필수
   [
-    body("textId")
+    // 입력 데이터 검증 규칙들
+    body("textId") // 텍스트 ID (선택사항)
       .optional()
       .isMongoId()
       .withMessage("유효하지 않은 텍스트 ID입니다."),
-    body("textContent")
+    body("textContent") // 타이핑할 텍스트 내용 (필수)
       .isLength({ min: 10 })
       .withMessage("텍스트는 최소 10자 이상이어야 합니다."),
-    body("testMode")
+    body("testMode") // 테스트 모드 (연습/시험/도전)
       .isIn(["practice", "test", "challenge"])
       .withMessage("유효하지 않은 테스트 모드입니다."),
   ],
   async (req, res) => {
     try {
+      // 입력 데이터 검증 결과 확인
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -34,40 +46,46 @@ router.post(
         });
       }
 
+      // 요청에서 필요한 데이터 추출
       const { textId, textContent, testMode = "practice" } = req.body;
 
+      // 새 타이핑 테스트 데이터 구성
       const testData = {
-        userId: req.user._id,
-        textContent,
-        testMode,
-        userInput: "",
-        startedAt: new Date(),
-        isCompleted: false,
+        userId: req.user._id, // 현재 로그인한 사용자 ID
+        textContent, // 타이핑할 텍스트
+        testMode, // 테스트 모드
+        userInput: "", // 사용자 입력 (아직 비어있음)
+        startedAt: new Date(), // 테스트 시작 시간
+        isCompleted: false, // 완료 여부 (아직 시작 단계)
         results: {
-          wpm: 0,
-          accuracy: 0,
-          errors: 0,
-          timeElapsed: 0,
-          charactersTyped: 0,
-          wordsTyped: 0,
+          // 결과 초기값들
+          wpm: 0, // Words Per Minute (분당 단어수)
+          accuracy: 0, // 정확도
+          errors: 0, // 오타 수
+          timeElapsed: 0, // 소요 시간
+          charactersTyped: 0, // 입력한 글자 수
+          wordsTyped: 0, // 입력한 단어 수
         },
       };
 
+      // 특정 텍스트 ID가 제공된 경우 추가
       if (textId) {
         testData.textId = textId;
       }
 
+      // 데이터베이스에 새 테스트 생성 및 저장
       const typingTest = new TypingTest(testData);
       await typingTest.save();
 
+      // 성공 응답 - 프론트엔드에서 테스트를 시작할 수 있는 정보 제공
       res.status(201).json({
         message: "타이핑 테스트가 시작되었습니다.",
-        testId: typingTest._id,
+        testId: typingTest._id, // 테스트 ID (나중에 완료시 필요)
         test: {
           _id: typingTest._id,
-          textContent: typingTest.textContent,
-          testMode: typingTest.testMode,
-          startedAt: typingTest.startedAt,
+          textContent: typingTest.textContent, // 타이핑할 텍스트
+          testMode: typingTest.testMode, // 테스트 모드
+          startedAt: typingTest.startedAt, // 시작 시간
         },
       });
     } catch (error) {
@@ -80,10 +98,14 @@ router.post(
   }
 );
 
-// 타이핑 테스트 완료 및 결과 저장
+// ===================================
+// 타이핑 테스트 완료 API
+// ===================================
+// POST /api/typing/test/:testId/complete
+// 사용자가 타이핑 테스트를 완료했을 때 결과를 저장하고 분석합니다
 router.post(
   "/test/:testId/complete",
-  authenticate,
+  authenticate, // 로그인 필수
   [
     param("testId").isMongoId().withMessage("유효하지 않은 테스트 ID입니다."),
     body("userInput")
@@ -132,7 +154,7 @@ router.post(
       }
 
       // 결과 계산
-      const errors = typingTest.analyzeErrors();
+      const analysisErrors = typingTest.analyzeErrors();
       const wordsTyped = userInput.trim().split(/\s+/).length;
       const charactersTyped = userInput.length;
 
@@ -141,7 +163,7 @@ router.post(
       typingTest.results = {
         wpm: Math.round(wpm),
         accuracy: Math.round(accuracy),
-        errors: errors.length,
+        errors: analysisErrors.length,
         timeElapsed: Math.round(timeElapsed),
         charactersTyped,
         wordsTyped,
@@ -158,9 +180,9 @@ router.post(
 
       // 에러 분석
       typingTest.analysis.errorAnalysis = {
-        mostMissedCharacters: this.getMostMissedCharacters(errors),
-        errorPositions: errors.map((e) => e.position),
-        commonMistakes: this.getCommonMistakes(errors),
+        mostMissedCharacters: getMostMissedCharacters(analysisErrors),
+        errorPositions: analysisErrors.map((e) => e.position),
+        commonMistakes: getCommonMistakes(analysisErrors),
       };
 
       await typingTest.save();
@@ -226,7 +248,11 @@ router.post(
   }
 );
 
-// 사용자의 타이핑 테스트 기록 조회
+// ===================================
+// 사용자 타이핑 테스트 기록 조회 API
+// ===================================
+// GET /api/typing/tests
+// 로그인한 사용자의 과거 타이핑 테스트 기록들을 페이지네이션과 함께 조회합니다
 router.get("/tests", authenticate, async (req, res) => {
   try {
     const { page = 1, limit = 20, testMode } = req.query;
@@ -307,7 +333,11 @@ router.get(
   }
 );
 
-// 타이핑 텍스트 목록 조회
+// ===================================
+// 타이핑 텍스트 목록 조회 API
+// ===================================
+// GET /api/typing/texts
+// 사용할 수 있는 타이핑 텍스트들의 목록을 조회합니다 (로그인 선택사항)
 router.get("/texts", optionalAuth, async (req, res) => {
   try {
     const { category, difficulty, page = 1, limit = 20, search } = req.query;
@@ -401,7 +431,11 @@ router.get(
   }
 );
 
+// ===================================
 // 유틸리티 함수들
+// ===================================
+
+// 가장 많이 틀린 글자들을 분석하는 함수
 function getMostMissedCharacters(errors) {
   const charCount = {};
   errors.forEach((error) => {
@@ -415,6 +449,7 @@ function getMostMissedCharacters(errors) {
     .map(([char]) => char);
 }
 
+// 일반적인 타이핑 실수 패턴을 분석하는 함수 (예: 'a'를 's'로 잘못 친다 등)
 function getCommonMistakes(errors) {
   const mistakeCount = {};
   errors.forEach((error) => {
