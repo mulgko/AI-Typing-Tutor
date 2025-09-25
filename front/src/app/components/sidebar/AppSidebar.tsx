@@ -202,13 +202,6 @@ export function AppSidebar() {
                   <Moon className="h-4 w-4" />
                 )}
               </button>
-              <Link
-                href="/settings"
-                className="flex items-center justify-center w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                title="설정"
-              >
-                <Settings className="h-4 w-4" />
-              </Link>
               <button
                 onClick={() => {
                   // 로그아웃 로직
