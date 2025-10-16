@@ -5,7 +5,7 @@
 // 회원가입/로그인한 사용자의 모든 정보가 이 구조에 따라 데이터베이스에 저장됩니다.
 
 const mongoose = require("mongoose"); // MongoDB ODM 라이브러리
-const bcrypt = require("bcrypt"); // 비밀번호 암호화를 위한 라이브러리
+const bcrypt = require("bcryptjs"); // 비밀번호 암호화를 위한 라이브러리
 
 // ===================================
 // 사용자 데이터 스키마 정의

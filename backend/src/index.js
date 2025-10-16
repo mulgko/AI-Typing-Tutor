@@ -11,7 +11,7 @@ const helmet = require("helmet"); // 보안 강화 미들웨어
 const compression = require("compression"); // 응답 데이터 압축으로 속도 향상
 const morgan = require("morgan"); // HTTP 요청 로그 기록
 const rateLimit = require("express-rate-limit"); // 과도한 요청 방지
-require("dotenv").config(); // 환경변수 파일(.env) 설정 로드
+require("dotenv").config({ path: "./tutor.env" }); // 환경변수 파일(.env) 설정 로드
 
 // 데이터베이스 연결 함수 불러오기
 const connectDB = require("./config/database");

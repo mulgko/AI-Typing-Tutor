@@ -1,10 +1,9 @@
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class AIService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    this.model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
   }
 
   /**
@@ -83,22 +82,20 @@ class AIService {
 텍스트:`;
 
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
+      const systemPrompt =
+        "당신은 타이핑 연습용 텍스트를 생성하는 전문가입니다. 사용자의 레벨과 요구사항에 맞는 적절한 난이도의 한국어 텍스트를 생성합니다.";
+      const result = await this.model.generateContent(
+        `${systemPrompt}\n\n${prompt}`
+      );
+      const completion = {
+        choices: [
           {
-            role: "system",
-            content:
-              "당신은 타이핑 연습용 텍스트를 생성하는 전문가입니다. 사용자의 레벨과 요구사항에 맞는 적절한 난이도의 한국어 텍스트를 생성합니다.",
-          },
-          {
-            role: "user",
-            content: prompt,
+            message: {
+              content: result.response.text(),
+            },
           },
         ],
-        max_tokens: 400,
-        temperature: 0.7,
-      });
+      };
 
       const generatedText = completion.choices[0].message.content.trim();
 
@@ -110,7 +107,7 @@ class AIService {
           category,
           length,
           generatedAt: new Date(),
-          model: "gpt-3.5-turbo",
+          model: "gemini-pro",
         },
       };
     } catch (error) {
@@ -181,22 +178,20 @@ ${userHistory
 `;
 
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
+      const systemPrompt =
+        "당신은 타이핑 실력 향상을 돕는 전문 강사입니다. 사용자의 타이핑 테스트 결과를 분석하여 건설적이고 격려적인 피드백을 제공합니다.";
+      const result = await this.model.generateContent(
+        `${systemPrompt}\n\n${aiPrompt}`
+      );
+      const completion = {
+        choices: [
           {
-            role: "system",
-            content:
-              "당신은 타이핑 실력 향상을 돕는 전문 강사입니다. 사용자의 타이핑 테스트 결과를 분석하여 건설적이고 격려적인 피드백을 제공합니다.",
-          },
-          {
-            role: "user",
-            content: aiPrompt,
+            message: {
+              content: result.response.text(),
+            },
           },
         ],
-        max_tokens: 500,
-        temperature: 0.7,
-      });
+      };
 
       const feedback = completion.choices[0].message.content.trim();
 
