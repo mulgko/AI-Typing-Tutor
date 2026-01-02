@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     
     # 데이터베이스 설정
     database_url: Optional[str] = os.getenv("DATABASE_URL")
+
     
     class Config:
         env_file = ".env"
