@@ -63,12 +63,13 @@ export default function TypingTest() {
         const elapsed = (Date.now() - startTime) / 1000;
         setTimeElapsed(elapsed);
 
-        const wordsTyped = userInput
-          .trim()
-          .split(/\s+/)
-          .filter((word) => word.length > 0).length;
-        const currentWpm =
-          elapsed > 0 ? Math.round((wordsTyped / elapsed) * 60) : 0;
+        // WPM 계산: 표준 타이핑 테스트 공식 사용
+        // 타이핑한 문자 수를 5로 나눈 값(평균 단어 길이)을 분당으로 계산
+        // 이 방법은 연속 공백에 영향받지 않고 정확한 WPM 제공
+        const charactersTyped = userInput.length;
+        const words = charactersTyped / 5; // 표준: 5글자 = 1단어
+        const minutes = elapsed / 60;
+        const currentWpm = minutes > 0 ? Math.round(words / minutes) : 0;
         setWpm(currentWpm);
       }, 100);
     }
@@ -95,8 +96,11 @@ export default function TypingTest() {
       setAiInsights(null);
       lastKeystrokeTime.current = 0;
     } catch (error) {
-      console.error("Failed to start typing test:", error);
-      // 오프라인 모드로 계속 진행
+      // 백엔드가 실행되지 않을 때 오프라인 모드로 조용히 전환
+      setCurrentTestId(null);
+      setKeystrokeData([]);
+      setAiInsights(null);
+      lastKeystrokeTime.current = 0;
     }
   };
 
@@ -259,24 +263,20 @@ export default function TypingTest() {
 
   const renderText = () => {
     return currentText.split("").map((char, index) => {
-      let displayChar = char;
+      // ✅ 항상 원본 텍스트를 표시 (레이아웃 보존)
+      const displayChar = char;
       let textClassName = "text-muted-foreground";
       let bgClassName = "";
+      const isSpace = char === " ";
 
-      // 공백 문자를 시각적으로 표시하기 위해 특별 처리
-      if (char === " ") {
-        displayChar = "·"; // 중점으로 공백 표시
-      }
+      // 현재 타이핑 중인 글자의 사용자 입력
+      let typingHint = null;
 
-      if (index < userInput.length) {
-        // 사용자가 입력한 글자를 표시
-        if (userInput[index] === " ") {
-          displayChar = "·"; // 입력된 공백도 중점으로 표시
-        } else {
-          displayChar = userInput[index];
-        }
+      if (index < userInput.length - 1) {
+        // 완료된 글자들 - 원본 유지 + 정답/오답 판정
+        const inputChar = userInput[index];
 
-        if (userInput[index] === char) {
+        if (inputChar === char) {
           // 올바른 글자
           textClassName = "text-green-600 dark:text-green-400";
           bgClassName = "bg-green-500/10";
@@ -285,18 +285,38 @@ export default function TypingTest() {
           textClassName = "text-red-600 dark:text-red-400";
           bgClassName = "bg-red-500/20";
         }
+      } else if (index === userInput.length - 1 && !isCompleted) {
+        // 현재 타이핑 중인 글자 - 판정 없이 위쪽에 힌트 표시
+        const inputChar = userInput[index];
+        textClassName = "text-blue-600 dark:text-blue-400 font-semibold";
+        bgClassName = "bg-blue-500/20";
+
+        // 한글 조합 과정을 위쪽에 작게 표시
+        if (inputChar !== char) {
+          typingHint = (
+            <span className="absolute -top-6 left-0 text-xs bg-blue-600 text-white px-2 py-1 rounded shadow-lg z-10">
+              {inputChar}
+            </span>
+          );
+        }
       } else if (index === userInput.length && !isCompleted) {
-        // 현재 커서 위치
+        // 다음 입력 위치 (커서)
         bgClassName = "bg-blue-500/30 animate-pulse";
         textClassName = "text-foreground";
       }
 
+      // 공백 문자 표시
+      const spaceStyle = isSpace
+        ? "inline-block min-w-[0.5em] border-b-2 border-dotted border-muted-foreground/30"
+        : "";
+
       return (
         <span
           key={index}
-          className={`relative ${bgClassName} ${textClassName} transition-all duration-150 whitespace-pre`}
+          className={`relative ${bgClassName} ${textClassName} ${spaceStyle} transition-all duration-150`}
         >
           {displayChar}
+          {typingHint}
           {index === userInput.length && !isCompleted && (
             <span className="absolute top-0 left-0 w-0.5 h-full bg-blue-500 animate-pulse" />
           )}
@@ -394,15 +414,18 @@ export default function TypingTest() {
         <CardContent className="space-y-4">
           {/* Text Display with Overlay Input */}
           <div className="relative">
-            <div className="p-6 bg-muted/50 rounded-lg min-h-[120px] text-xl leading-relaxed font-mono select-none">
+            <div
+              className="p-6 bg-muted/50 rounded-lg min-h-[120px] text-xl leading-relaxed font-mono select-none break-words"
+              style={{ whiteSpace: 'pre-wrap' }}
+            >
               {renderText()}
             </div>
             <textarea
               ref={inputRef}
               value={userInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              className="absolute inset-0 w-full h-full p-6 text-xl leading-relaxed font-mono bg-transparent border-none outline-none resize-none text-transparent caret-transparent"
-              style={{ caretColor: "transparent" }}
+              className="absolute inset-0 w-full h-full p-6 text-xl leading-relaxed font-mono bg-transparent border-none outline-none resize-none text-transparent caret-transparent break-words"
+              style={{ caretColor: "transparent", whiteSpace: 'pre-wrap' }}
               placeholder=""
               disabled={isCompleted}
               autoFocus
