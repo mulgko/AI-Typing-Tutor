@@ -50,3 +50,45 @@ body {
   font-family: "Inter", sans-serif !important;
   scroll-behavior: smooth;
 }
+
+/* Virtual Keyboard Animations */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Badge Fade In Animation */
+@keyframes fadeInSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-in {
+  animation: fadeInSlideUp 0.3s ease-out forwards;
+}
+
+.fade-in {
+  animation: fadeInSlideUp 0.3s ease-out forwards;
+}
+
+.slide-in-from-bottom-2 {
+  animation: fadeInSlideUp 0.3s ease-out forwards;
+}

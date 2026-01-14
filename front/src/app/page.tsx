@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Progress } from "./components/ui/progress";
-import { Badge } from "./components/ui/badge";
 
 import {
   RotateCcw,
@@ -17,6 +16,9 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { typingApi, aiApi } from "@/lib/api";
+import { VirtualKeyboard } from "./components/ui/virtualKeyboard";
+import { useNextKey } from "@/app/hooks/useNextKey";
+import { getKeyForChar } from "@/app/lib/hangul";
 
 // 기본 샘플 텍스트 (AI 생성이 실패할 경우 fallback)
 const sampleTexts = [
@@ -52,9 +54,14 @@ export default function TypingTest() {
     recommendations: string[];
     feedback?: string;
   } | null>(null);
+  const [pressedKey, setPressedKey] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastKeystrokeTime = useRef<number>(0);
   const { toast } = useToast();
+
+  // Calculate next key for virtual keyboard highlighting
+  const nextKey = useNextKey(currentText, userInput);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -81,6 +88,24 @@ export default function TypingTest() {
       inputRef.current.focus();
     }
   }, [currentText]);
+
+  // Keyboard event listener for visual feedback
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Visual feedback for key press
+      const key = e.key.toLowerCase();
+      setPressedKey(key);
+
+      // Clear after animation duration
+      setTimeout(() => setPressedKey(null), 150);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   // 타이핑 테스트 시작
   const startTypingTest = async () => {
@@ -133,7 +158,15 @@ export default function TypingTest() {
     if (value.length > userInput.length) {
       const newChar = value[value.length - 1];
       const expectedChar = currentText[value.length - 1];
-      recordKeystroke(newChar, newChar === expectedChar);
+      const isCorrect = newChar === expectedChar;
+      recordKeystroke(newChar, isCorrect);
+
+      // Error visualization
+      if (!isCorrect) {
+        const errorKeyName = getKeyForChar(expectedChar);
+        setErrorKey(errorKeyName);
+        setTimeout(() => setErrorKey(null), 500);
+      }
     } else if (value.length < userInput.length) {
       // 백스페이스
       recordKeystroke("Backspace", false);
@@ -330,12 +363,12 @@ export default function TypingTest() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
+      {/* <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">AI 타이핑 테스트</h1>
         <p className="text-muted-foreground">
           AI가 생성한 맞춤형 지문으로 타이핑 실력을 향상시키세요
         </p>
-      </div>
+      </div> */}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -482,19 +515,17 @@ export default function TypingTest() {
         </CardContent>
       </Card>
 
-      {/* Performance Badges */}
-      <div className="flex flex-wrap gap-2 justify-center">
-        {wpm > 40 && <Badge variant="secondary">빠른 타이핑</Badge>}
-        {accuracy > 95 && <Badge variant="secondary">높은 정확도</Badge>}
-        {errors === 0 && userInput.length > 10 && (
-          <Badge variant="secondary">무오타</Badge>
-        )}
-        {isActive && (
-          <Badge variant="outline" className="animate-pulse">
-            진행 중
-          </Badge>
-        )}
-        {isCompleted && <Badge variant="default">완료</Badge>}
+      {/* Virtual Keyboard */}
+      <div className="w-full">
+        <VirtualKeyboard
+          nextChar={nextKey}
+          pressedKey={pressedKey}
+          errorKey={errorKey}
+          showNextKeyHighlight={true}
+          showFingerGuide={true}
+          showKeyPressAnimation={true}
+          showErrorVisualization={true}
+        />
       </div>
     </div>
   );
