@@ -1,0 +1,1 @@
+password 설정 방법: SECURITY => Database & Network Access => Database Users = Edit
